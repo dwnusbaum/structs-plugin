@@ -101,6 +101,10 @@ public abstract class ParameterType {
             if (Types.isSubClassOf(type, Collection.class)) {
                 return new ArrayType(type, of(Types.getTypeArgument(Types.getBaseClass(type,Collection.class), 0, Object.class)));
             }
+            if (Types.isSubClassOf(type, Map.class)) {
+                return new MapType(type, of(Types.getTypeArgument(Types.getBaseClass(type, Map.class), 0, Object.class)),
+                       of(Types.getTypeArgument(Types.getBaseClass(type, Map.class), 1, Object.class)));
+            }
             throw new UnsupportedOperationException("do not know how to categorize attributes of type " + type);
         } catch (Exception x) {
             return new ErrorType(x, type);

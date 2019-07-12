@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -121,13 +122,20 @@ public class UninstantiatedDescribable implements Serializable {
         for (Entry<String,?> e : arguments.entrySet()) {
             Object v = e.getValue();
             // see DescribableParameter.uncoerce for possible variety
-            v = toMap(v);
-            if (v instanceof List) {
+            if (v instanceof UninstantiatedDescribable) {
+                v = ((UninstantiatedDescribable) v).toMap();
+            } else if (v instanceof List) {
                 List l = new ArrayList(((List) v).size());
                 for (Object o : (List) v) {
                     l.add(toMap(o));
                 }
                 v = l;
+            } else if (v instanceof Map) {
+                Map<Object, Object> m = new LinkedHashMap(((Map) v).size());
+                for (Map.Entry<?, ?> entry : ((Map<?, ?>) v).entrySet()) {
+                    m.put(toMap(entry.getKey()), toMap(entry.getValue()));
+                }
+                v = m;
             }
             r.put(e.getKey(),v);
         }

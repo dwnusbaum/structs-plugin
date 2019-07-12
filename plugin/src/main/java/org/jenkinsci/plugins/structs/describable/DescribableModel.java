@@ -412,6 +412,9 @@ public final class DescribableModel<T> implements Serializable {
         if (o instanceof List && Collection.class.isAssignableFrom(erased)) {
             return coerceList(context,
                     Types.getTypeArgument(Types.getBaseClass(type, Collection.class), 0, Object.class), (List) o);
+        } else if (o instanceof Map && Map.class.isAssignableFrom(erased)) {
+            return coerceMap(context, Types.getTypeArgument(Types.getBaseClass(type, Map.class), 0, Object.class),
+                    Types.getTypeArgument(Types.getBaseClass(type, Map.class), 1, Object.class), (Map) o);
         } else if (Primitives.wrap(erased).isInstance(o)) {
             return o;
         } else if (o==null) {
@@ -537,6 +540,17 @@ public final class DescribableModel<T> implements Serializable {
         List<Object> r = new ArrayList<Object>();
         for (Object elt : list) {
             r.add(coerce(context, type, elt));
+        }
+        return r;
+    }
+
+    /**
+     * Apply {@link #coerce(String, Type, Object)} to entries in a map.
+     */
+    private Map<Object, Object> coerceMap(String context, Type keyType, Type valueType, Map<?, ?> map) throws Exception {
+        Map<Object, Object> r = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            r.put(coerce(context, keyType, entry.getKey()), coerce(context, valueType, entry.getValue()));
         }
         return r;
     }

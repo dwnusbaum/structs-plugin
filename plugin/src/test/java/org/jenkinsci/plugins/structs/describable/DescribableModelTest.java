@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -541,6 +542,43 @@ public class DescribableModelTest {
         }
     }
 
+    @Test public void structMapHomo() throws Exception {
+        roundTrip(UsesStructMapHomo.class, map("impls", map("key1", map(), "key2", map("flag", true))), "UsesStructMapHomo{key1=Impl2[false], key2=Impl2[true]}");
+        schema(UsesStructMapHomo.class, "UsesStructMapHomo(impls: Map<String,Impl2(flag?: boolean)>)");
+    }
+
+    public static final class UsesStructMapHomo {
+        private final Map<String, Impl2> impls;
+        @DataBoundConstructor public UsesStructMapHomo(Map<String, Impl2> impls) {
+            this.impls = impls;
+        }
+        public Map<String, Impl2> getImpls() {
+            return impls;
+        }
+        @Override public String toString() {
+            return "UsesStructMapHomo" + impls;
+        }
+    }
+
+    @Test public void structMapHetero() throws Exception {
+        roundTrip(UsesStructMapHetero.class, map("bases", mapObj(map(CLAZZ, "Impl2"), map(CLAZZ, "Impl1", "text", "hello"), map(CLAZZ, "Impl1", "text", "key2"), map(CLAZZ, "Impl2", "flag", true))), "UsesStructMapHetero{Impl2[false]=Impl1[hello], Impl1[key2]=Impl2[true]}");
+        String baseType = "Base{Impl1(text: String) | Impl2(flag?: boolean) | Impl3(base: Base…) | Impl4(bases: Base…[])}";
+        schema(UsesStructMapHetero.class, "UsesStructMapHetero(bases: Map<" + baseType + "," + baseType + ">)");
+    }
+
+    public static final class UsesStructMapHetero {
+        private final Map<Base, Base> bases;
+        @DataBoundConstructor public UsesStructMapHetero(Map<Base, Base> bases) {
+            this.bases = bases;
+        }
+        public Map<Base, Base> getBases() {
+            return bases;
+        }
+        @Override public String toString() {
+            return "UsesStructMapHetero" + bases;
+        }
+    }
+
     @Test public void defaultValuesStructCollectionCommon() throws Exception {
         roundTrip(DefaultStructCollection.class, map("bases", Arrays.asList(map(CLAZZ, "Impl1", "text", "special"))), "DefaultStructCollection[Impl1[special]]");
     }
@@ -877,6 +915,17 @@ public class DescribableModelTest {
         Map<String,Object> m = new TreeMap<String,Object>();
         for (int i = 0; i < keysAndValues.length; i += 2) {
             m.put((String) keysAndValues[i], keysAndValues[i + 1]);
+        }
+        return m;
+    }
+
+    private static Map<Object,Object> mapObj(Object... keysAndValues) {
+        if (keysAndValues.length % 2 != 0) {
+            throw new IllegalArgumentException();
+        }
+        Map<Object,Object> m = new LinkedHashMap<>();
+        for (int i = 0; i < keysAndValues.length; i += 2) {
+            m.put(keysAndValues[i], keysAndValues[i + 1]);
         }
         return m;
     }
